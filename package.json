@@ -1,0 +1,48 @@
+{
+  "name": "node-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "bunx --bun prisma generate",
+    "db:migrate": "bunx --bun prisma migrate dev",
+    "db:deploy": "bunx --bun prisma migrate deploy",
+    "db:seed": "bun prisma/seed.ts",
+    "test": "bun test",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun test",
+    "test:unit": "bun test tests/order-rules.test.ts tests/services.test.ts tests/architecture.test.ts tests/openapi.test.ts tests/validation.test.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "express": "^5.1.0",
+    "jose": "^6.1.0",
+    "pg": "^8.16.0",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "@types/express": "^5.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "prisma": "^7.0.0",
+    "supertest": "^7.1.0",
+    "typescript": "^5.9.0",
+    "@eslint/js": "^9.39.1",
+    "@typescript-eslint/eslint-plugin": "^8.30.1",
+    "@typescript-eslint/parser": "^8.30.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.2",
+    "globals": "^14.0.0",
+    "prettier": "3.6.2"
+  }
+}

@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  BUYER
+  SELLER
+  MODERATOR
+  ADMIN
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TicketStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  CREATED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sessions     Session[]
+  products     Product[]
+  decisions    ModerationTicket[] @relation("Moderator")
+  cartItems    CartItem[]
+  orders       Order[]
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Product {
+  id          String        @id @default(uuid()) @db.Uuid
+  sellerId    String        @db.Uuid
+  categoryId  String        @db.Uuid
+  name        String
+  description String
+  images      String[]      @default([])
+  status      ProductStatus @default(DRAFT)
+  deletedAt   DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  seller      User          @relation(fields: [sellerId], references: [id])
+  category    Category      @relation(fields: [categoryId], references: [id])
+  skus        Sku[]
+  tickets     ModerationTicket[]
+  @@index([sellerId, deletedAt])
+  @@index([status, categoryId, deletedAt])
+}
+
+model Sku {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @db.Uuid
+  name       String
+  attributes Json     @default("{}")
+  price      Int
+  costPrice  Int?
+  deletedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id])
+  inventory  Inventory?
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  @@index([productId, deletedAt])
+}
+
+model Inventory {
+  skuId    String @id @db.Uuid
+  quantity Int    @default(0)
+  reserved Int    @default(0)
+  sku      Sku    @relation(fields: [skuId], references: [id])
+}
+
+model ModerationTicket {
+  id          String       @id @default(uuid()) @db.Uuid
+  productId   String       @db.Uuid
+  moderatorId String?      @db.Uuid
+  status      TicketStatus @default(PENDING)
+  snapshot    Json
+  reason      String?
+  createdAt   DateTime     @default(now())
+  decidedAt   DateTime?
+  product     Product      @relation(fields: [productId], references: [id])
+  moderator   User?        @relation("Moderator", fields: [moderatorId], references: [id])
+  @@index([status, createdAt])
+  @@index([productId])
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  buyerId   String   @db.Uuid
+  skuId     String   @db.Uuid
+  quantity  Int
+  createdAt DateTime @default(now())
+  buyer     User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  sku       Sku      @relation(fields: [skuId], references: [id])
+  @@unique([buyerId, skuId])
+}
+
+model Order {
+  id             String      @id @default(uuid()) @db.Uuid
+  buyerId        String      @db.Uuid
+  status         OrderStatus @default(CREATED)
+  total          Int
+  deliveryAddress String
+  idempotencyKey String
+  requestHash    String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  buyer          User        @relation(fields: [buyerId], references: [id])
+  items          OrderItem[]
+  @@unique([buyerId, idempotencyKey])
+  @@index([buyerId, createdAt])
+}
+
+model OrderItem {
+  id          String @id @default(uuid()) @db.Uuid
+  orderId     String @db.Uuid
+  skuId       String @db.Uuid
+  productName String
+  skuName     String
+  unitPrice   Int
+  quantity    Int
+  order       Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku         Sku    @relation(fields: [skuId], references: [id])
+  @@index([orderId])
+  @@index([skuId])
+}
