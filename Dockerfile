@@ -3,7 +3,6 @@ FROM oven/bun:${BUN_VERSION}-alpine AS base
 WORKDIR /app
 
 FROM base AS build
-RUN apk add --no-cache openssl
 COPY package.json bun.lock ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
   bun install --frozen-lockfile
