@@ -1,0 +1,10 @@
+**
+!Dockerfile
+!package.json
+!bun.lock
+!prisma.config.ts
+!prisma/
+!prisma/**
+!src/
+!src/**
+src/generated/
