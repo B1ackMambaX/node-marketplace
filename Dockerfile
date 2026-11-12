@@ -17,14 +17,12 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
   bun install --frozen-lockfile --production --omit=peer
 
 FROM base AS runtime
-ENV NODE_ENV=production \
-  PORT=3000
+ENV NODE_ENV=production
 COPY --from=production-dependencies --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=build --chown=bun:bun /app/src ./src
+COPY --chown=bun:bun prisma ./prisma
+COPY --chown=bun:bun prisma.config.ts ./
 COPY --chown=bun:bun package.json ./
 
 USER bun
-EXPOSE 3000
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
-  CMD bun -e 'const r = await fetch(`http://127.0.0.1:${process.env.PORT}/health`); process.exit(r.ok ? 0 : 1)'
-CMD ["bun", "src/server.ts"]
+CMD ["sh", "-c", "bun run db:deploy && exec bun run start"]
